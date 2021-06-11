@@ -3,6 +3,7 @@ import datetime
 import random
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.ticker
 import numpy as np
 from scipy.signal import savgol_filter
 from matplotlib import gridspec
@@ -15,6 +16,11 @@ DATA_REQUEST_API = "https://api2.chiaexplorer.com/chart/netSpace?period=3m"
 
 netspace_data = {
     "data": [
+        21848.492725527143,
+        21205.33766454223,
+        21093.58272856308,
+        20749.139338112655,
+        20295.462153208347,
         20160.727788034827,
         20184.173373028647,
         20525.611572804894,
@@ -308,6 +314,11 @@ netspace_data = {
         120.52802134077092,
     ],
     "timestamp": [
+        1623390693000,
+        1623347585000,
+        1623325930000,
+        1623304773000,
+        1623282716000,
         1623239533000,
         1623217919000,
         1623196277000,
@@ -651,29 +662,41 @@ while timestamps_datetime[valid_increase_index] < (
 
 fig = plt.figure()
 # set height ratios for subplots
-gs = gridspec.GridSpec(4, 1, height_ratios=[1, 1, 0, 1])
+gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
 
 # the first subplot
 ax0 = plt.subplot(gs[0])
-# log scale for axis Y of the first subplot
-# ax0.set_yscale("log")
-(line0,) = ax0.plot(timestamps_datetime, netspace, color="r")
+(line0,) = ax0.plot(timestamps_datetime, netspace, color="tab:red")
 plt.gcf().autofmt_xdate()
 plt.grid()
-plt.ylabel("Netspace (PiB)")
+plt.ylabel("Netspace (PiB)", color="tab:red")
+plt.tick_params(axis="y", labelcolor="tab:red")
 
 # the second subplot
 # shared axis X
-ax1 = plt.subplot(gs[1], sharex=ax0)
+# ax1 = plt.subplot(gs[1], sharex=ax0)
+ax1 = ax0.twinx()
+(line2,) = ax1.plot(
+    timestamps_datetime[:valid_increase_index],
+    daily_increase[:valid_increase_index],
+    color="gainsboro",
+)
+
 (line1,) = ax1.plot(
     timestamps_datetime[:valid_increase_index],
     daily_increase_smooth[:valid_increase_index],
-    color="b",
+    color="tab:green",
 )
+
+nticks = 7
+ax0.yaxis.set_major_locator(matplotlib.ticker.LinearLocator(nticks))
+ax1.yaxis.set_major_locator(matplotlib.ticker.LinearLocator(nticks))
+
 # (line2,) = ax1.plot(timestamps_datetime, delta_increment, color="g")
-plt.setp(ax0.get_xticklabels(), visible=False)
+plt.setp(ax1.get_xticklabels(), visible=False)
 plt.grid()
-plt.ylabel("Daily increase (PiB)")
+plt.ylabel("Daily increase (PiB)", color="tab:green")
+plt.tick_params(axis="y", labelcolor="tab:green")
 # remove last tick label for the second subplot
 yticks = ax1.yaxis.get_major_ticks()
 yticks[-1].label1.set_visible(False)
@@ -702,11 +725,17 @@ yticks[-1].label1.set_visible(False)
 
 
 # shared axis X
-ax3 = plt.subplot(gs[3], sharex=ax0)
+ax3 = plt.subplot(gs[1], sharex=ax0)
+
 (line4,) = ax3.plot(
     timestamps_datetime[:valid_increase_index],
+    increase_percentage_daily[:valid_increase_index],
+    color="gainsboro",
+)
+(line3,) = ax3.plot(
+    timestamps_datetime[:valid_increase_index],
     increase_percentage_daily_smooth[:valid_increase_index],
-    color="c",
+    color="tab:olive",
 )
 
 plt.setp(ax0.get_xticklabels(), visible=False)
@@ -746,6 +775,7 @@ plt.subplots_adjust(hspace=0.0)
 fig.autofmt_xdate()
 
 fig.suptitle("Chia network analysis", fontsize=16)
+fig.tight_layout()
 plt.show()
 
 # plot
